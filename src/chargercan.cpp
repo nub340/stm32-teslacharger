@@ -18,7 +18,7 @@
  */
 #include "chargercan.h"
 
-void ChargerCAN::MapMessages(Can* can)
+void ChargerCAN::MapMessages(CanMap* can)
 {
    can->AddRecv(Param::hwaclim, 0x207, 32, 9, 0.06666f); //gain 0.06666
    can->AddRecv(Param::hwaclim, 0x209, 32, 9, 0.06666f); //gain 0.06666

@@ -2,7 +2,7 @@
 #define HWDEFS_H_INCLUDED
 
 
-#define RCC_CLOCK_SETUP rcc_clock_setup_in_hse_8mhz_out_72mhz
+#define RCC_CLOCK_SETUP() rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ])
 
 //Address of parameter block in flash
 #define FLASH_PAGE_SIZE 1024

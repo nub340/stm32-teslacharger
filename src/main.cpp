@@ -28,6 +28,7 @@
 #include <libopencm3/stm32/iwdg.h>
 #include <libopencm3/stm32/crc.h>
 #include "stm32_can.h"
+#include "cansdo.h"
 #include "terminal.h"
 #include "params.h"
 #include "hwdefs.h"
@@ -42,9 +43,13 @@
 #include "picontroller.h"
 #include "chargercan.h"
 #include "charger.h"
+#include "terminalcommands.h"
+
+#define PRINT_JSON 0
 
 static Stm32Scheduler* scheduler;
-static Can* can;
+static CanHardware* can;
+static CanMap* canMap;
 PiController dcCurController;
 uint32_t startTime;
 
@@ -72,7 +77,7 @@ static void Ms100Task(void)
 
    EvseRead();
 
-   can->SendAll();
+   canMap->SendAll();
 }
 
 static void MapChargerMessages()
@@ -84,13 +89,13 @@ static void MapChargerMessages()
    bool dummyrx;
 
    //check sample value, if it is mapped assume valid CAN map
-   if (can->FindMap(Param::hwaclim, dummyId, dummyOfs, dummyLen, dummyGain, dummyAdd, dummyrx)) return;
+   if (canMap->FindMap(Param::hwaclim, dummyId, dummyOfs, dummyLen, dummyGain, dummyAdd, dummyrx)) return;
 
-   can->Clear();
+   //canMap->Clear();
 
-   ChargerCAN::MapMessages(can);
+   ChargerCAN::MapMessages(canMap);
 
-   can->Save();
+   canMap->Save();
 }
 
 /** This function is called when the user changes a parameter */
@@ -113,6 +118,16 @@ void Param::Change(Param::PARAM_NUM paramNum)
          //Handle general parameter changes here. Add paramNum labels for handling specific parameters
          break;
    }
+}
+
+static void HandleClear()
+{
+   MapChargerMessages();
+}
+
+static bool CanCallback(uint32_t, uint32_t*, uint8_t)
+{
+   return false;
 }
 
 //Whichever timer(s) you use for the scheduler, you have to
@@ -142,10 +157,19 @@ extern "C" int main(void)
    Stm32Scheduler s(TIM2); //We never exit main so it's ok to put it on stack
    scheduler = &s;
    //Initialize CAN1, including interrupts. Clock must be enabled in clock_setup()
-   Can c(CAN1, Can::Baud500, true);
-   c.SetNodeId(5);
-   //store a pointer for easier access
+   Stm32Can c(CAN1, CanHardware::Baud500, true);
+   FunctionPointerCallback cb(CanCallback, HandleClear);
+   c.AddCallback(&cb);
    can = &c;
+
+   //store a pointer for easier access
+   CanMap cm(&c);
+   canMap = &cm;
+   CanSdo sdo(&c, &cm);
+   sdo.SetNodeId(2);
+
+   TerminalCommands::SetCanMap(&cm);
+
    Terminal t3(USART3, termCmds);
    Terminal t1(USART1, termCmds);
 
@@ -161,6 +185,9 @@ extern "C" int main(void)
 
    //backward compatibility, version 4 was the first to support the "stream" command
    Param::SetInt(Param::version, 4);
+   Param::SetFlag(Param::test_time, Param::FLAG_HIDDEN);
+   Param::SetFlag(Param::test_timer_flag, Param::FLAG_HIDDEN);
+   Param::SetFlag(Param::test_timer_icvalue, Param::FLAG_HIDDEN);
 
    //In version 1.11 this changed from mV to V
    if (Param::GetInt(Param::udcspnt) > 420)
@@ -176,6 +203,12 @@ extern "C" int main(void)
    {
       t1.Run();
       t3.Run();
+
+      if (sdo.GetPrintRequest() == PRINT_JSON)
+      {
+         char c = 0;
+         TerminalCommands::PrintParamsJson(&sdo, &c);
+      }
    }
 
 

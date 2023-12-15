@@ -18,12 +18,12 @@
  */
 #ifndef CHARGERCAN_H
 #define CHARGERCAN_H
-#include "stm32_can.h"
+#include "canmap.h"
 
 class ChargerCAN
 {
    public:
-      static void MapMessages(Can* can);
+      static void MapMessages(CanMap* can);
 
    protected:
 

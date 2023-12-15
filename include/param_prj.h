@@ -39,7 +39,7 @@
  */
 
 //Define a version string of your firmware here
-#define VER 1.17.R
+#define VER 1.18.R
 
 /* Entries must be ordered as follows:
    1. Saveable parameters (id != 0)
@@ -107,10 +107,9 @@
     VALUE_ENTRY(c3iac,       "A",     2034 ) \
     VALUE_ENTRY(c3udc,       "V",     2035 ) \
     VALUE_ENTRY(c3idc,       "A",     2036 ) \
-    VALUE_ENTRY(test_time,   "s",     2037 ) \
-    VALUE_ENTRY(test_timer_flag,   "X",     2038 ) \
-    VALUE_ENTRY(test_timer_icvalue,   "X",     2039 ) \
-    // TODO: How to hide this in interface?
+    VALUE_ENTRY(test_time,   "s",     3000 ) \
+    VALUE_ENTRY(test_timer_flag,   "X",     3001 ) \
+    VALUE_ENTRY(test_timer_icvalue,   "X",     3002 ) \
 
 
 /***** Enum String definitions *****/

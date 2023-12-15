@@ -33,16 +33,17 @@ CFLAGS		= -Os -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include
              -fno-common -fno-builtin -pedantic -DSTM32F1 \
              -mcpu=cortex-m3 -mthumb -std=gnu99 -ffunction-sections -fdata-sections
 CPPFLAGS    = -Os -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include \
-            -fno-common -std=c++11 -pedantic -DSTM32F1 -DMAX_MESSAGES=15 \
+            -fno-common -std=c++11 -pedantic -DSTM32F1 -DMAX_ITEMS=70 -DMAX_MESSAGES=15 \
             -ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 LDSCRIPT	  = linker.ld
 LDFLAGS    = -Llibopencm3/lib -T$(LDSCRIPT) -march=armv7 -nostartfiles -Wl,--gc-sections,-Map,linker.map
 OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
              my_string.o digio.o sine_core.o my_fp.o printf.o anain.o \
-             param_save.o errormessage.o stm32_can.o \
+             param_save.o errormessage.o canhardware.o stm32_can.o canmap.o cansdo.o \
              picontroller.o terminalcommands.o chargercan.o charger.o
 
 OBJS     = $(patsubst %.o,obj/%.o, $(OBJSL))
+DEPENDS  = $(patsubst %.o,obj/%.d, $(OBJSL))
 vpath %.c src/ libopeninv/src
 vpath %.cpp src/ libopeninv/src
 
@@ -78,13 +79,15 @@ $(BINARY): $(OBJS) $(LDSCRIPT)
 	@printf "  LD      $(subst $(shell pwd)/,,$(@))\n"
 	$(Q)$(LD) $(LDFLAGS) -o $(BINARY) $(OBJS) -lopencm3_stm32f1
 
+-include $(DEPENDS)
+
 $(OUT_DIR)/%.o: %.c Makefile
 	@printf "  CC      $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(CC) $(CFLAGS) -o $@ -c $<
+	$(Q)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
 
 $(OUT_DIR)/%.o: %.cpp Makefile
 	@printf "  CPP     $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(CPP) $(CPPFLAGS) -o $@ -c $<
+	$(Q)$(CPP) $(CPPFLAGS) -MMD -MP -o $@ -c $<
 
 clean:
 	@printf "  CLEAN   ${OUT_DIR}\n"
@@ -124,7 +127,7 @@ Test:
 	g++ -c -Ilibopeninv/include/ -o my_string.o libopeninv/src/my_string.c
 	g++ -c -Ilibopeninv/include/ -Iinclude -o params.o libopeninv/src/params.cpp
 	g++ -c -Ilibopeninv/include/ -Iinclude -o errormessage.o libopeninv/src/errormessage.cpp
-	g++ -c -Ilibopeninv/include/ -Iinclude -o printf.o libopeninv/src/printf.cpp
+	g++ -c -Ilibopeninv/include/ -Iinclude -Wno-builtin-declaration-mismatch -Wno-int-to-pointer-cast -o printf.o libopeninv/src/printf.cpp
 	g++ -c -Ilibopeninv/include/ -Iinclude -o picontroller.o libopeninv/src/picontroller.cpp
 	g++ -c -Ilibopeninv/include/ -Iinclude -o charger.o src/charger.cpp -D TEST_COMMON_H
 	g++ -c -Ilibopeninv/include/ -Iinclude -o digio_mock.o test/digio_mock.cpp

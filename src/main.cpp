@@ -83,8 +83,8 @@ static void Ms100Task(void)
 static void MapChargerMessages()
 {
    uint32_t dummyId;
-   uint8_t dummyOfs, dummyLen;
-   int8_t dummyAdd;
+   uint8_t dummyOfs;
+   int8_t dummyAdd, dummyLen;
    float dummyGain;
    bool dummyrx;
 

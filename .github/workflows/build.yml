@@ -19,7 +19,7 @@ jobs:
           sudo apt install -y gcc-arm-none-eabi make
 
       - name: Build firmware
-        working-directory: src
+        working-directory: .
         run: |
           make
 
